@@ -4,20 +4,24 @@ import youtube
 import os
 import re
 
+illegalChars = ["/", "\\", "|", "\'", "*", "?", "<", ">", ":"]
+
 
 # Ensures that there are no illegal characters in song name
 def make_save_name(name):
-    output = name.replace("/", "_")
-    output = output.replace("\\", "_")
-    output = output.replace("|", "_")
-    output = output.replace("\"", "_")
-    output = output.replace("*", "_")
-    output = output.replace("?", "_")
-    output = output.replace("<", "_")
-    output = output.replace(">", "_")
-    output = output.replace(":", "_")
-
+    output = name
+    for char in illegalChars:
+        output = output.replace(char, "_")
     return output
+
+
+def attach_metadata(filename, artist, album, cover, name):
+    os.system('ffmpeg -i Tmp/"{0}.mp3" -i {3} -map 0 -map 1:0 -y -hide_banner -codec copy '
+              '-metadata "artist={1}" -metadata "album={2}" Out/"{4}.mp3"'.format(filename, artist,
+                                                                                  album,
+                                                                                  cover,
+                                                                                  make_save_name(name)))
+    os.remove("./Tmp/{0}.mp3".format(filename))
 
 
 def main():
@@ -40,15 +44,9 @@ def main():
 
         print("{0} - {1}".format(name, artists[0]["name"]))
         print(cover)
-        sciezka = youtube.download(("{1} {0}".format(name, artists[0]["name"])))
+        filename = youtube.download(("{1} {0}".format(name, artists[0]["name"])))
+        attach_metadata(filename, artists[0]["name"], album, cover, name)
 
-        os.system('ffmpeg -i ./Tmp/"{0}.mp3" -i {3} -map 0 -map 1:0 -y -hide_banner -codec copy -metadata "artist={1}" '
-                  '-metadata "album={2}" ./Out/"{4}.mp3"'.format(sciezka,
-                                                                 artists[0]["name"],
-                                                                 album,
-                                                                 cover,
-                                                                 make_save_name(name)))
-        os.remove("./Tmp/{0}.mp3".format(sciezka))
     # Else do same thing but with album
     elif args.album:
         results = data_collect.get_spotify_album_data(args)
@@ -61,15 +59,9 @@ def main():
             artists = track["artists"]
             print("{1} {0}".format(name, artists[0]["name"]))
             print(cover)
-            sciezka = youtube.download(("{1} {0}".format(name, artists[0]["name"])))
+            filename = youtube.download(("{1} {0}".format(name, artists[0]["name"])))
 
-            os.system('ffmpeg -i Tmp/"{0}.mp3" -i {3} -map 0 -map 1:0 -y -hide_banner -codec copy -metadata "artist={1}" '
-                      '-metadata "album={2}" Out/"{4}.mp3"'.format(sciezka,
-                                                                   artists[0]["name"],
-                                                                   album,
-                                                                   cover,
-                                                                   make_save_name(name)))
-            os.remove("./Tmp/{0}.mp3".format(sciezka))
+            attach_metadata(filename, artists[0]["name"], album, cover, name)
 
     elif args.playlist:
         if not re.match("https://(open.spotify.com)/playlist/", args.playlist):
@@ -77,8 +69,8 @@ def main():
             return
         else:
             # Extract playlist ID from URL
-            askpos = args.playlist.index("?")
-            playlist_id = args.playlist[34:askpos]
+            question_mark_pos = args.playlist.index("?")
+            playlist_id = args.playlist[34:question_mark_pos]
             tracks = data_collect.get_spotify_playlist_tracks(playlist_id)
 
             for track in tracks["items"][:100]:
@@ -88,16 +80,10 @@ def main():
                 cover = track["track"]["album"]["images"][0]["url"]
                 print("{0} - {1}".format(name, artists[0]["name"]))
                 print(cover)
-                sciezka = youtube.download(("{1} {0}".format(name, artists[0]["name"])))
+                filename = youtube.download(("{1} {0}".format(name, artists[0]["name"])))
 
-                os.system(
-                    'ffmpeg -i Tmp/"{0}.mp3" -i {3} -map 0 -map 1:0 -y -hide_banner -codec copy -metadata "artist={1}" '
-                    '-metadata "album={2}" Out/"{4}.mp3"'.format(sciezka,
-                                                                 artists[0]["name"],
-                                                                 album,
-                                                                 cover,
-                                                                 make_save_name(name)))
-                os.remove("./Tmp/{0}.mp3".format(sciezka))
+                attach_metadata(filename, artists[0]["name"], album, cover, name)
+
 
 if __name__ == '__main__':
     main()
