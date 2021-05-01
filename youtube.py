@@ -1,5 +1,4 @@
 import youtube_dl
-import re
 
 ytdl_opts = {
     "format": "bestaudio/best",
