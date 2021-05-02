@@ -5,16 +5,19 @@ sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="SPOTIFY_CL
                                                            client_secret="SPOTIFY_CLIENT_SECRET"))
 
 
-def get_spotify_title_data(args):
-    results = sp.search(q=args.title, limit=1, type="track")
+def get_spotify_title_data(query):
+    results = sp.search(q=query, limit=1, type="track")
     return results
 
 
 def get_spotify_album_data(args):
-    results = sp.search(q=args.album, limit=1, type="album")
-    cover = results["albums"]["items"][0]["images"][0]["url"]
-    album = results["albums"]["items"][0]["name"]
-    tracks = sp.album_tracks(results["albums"]["items"][0]["id"])
+    question_mark_pos = args.index("?")
+    album_id = args[31:question_mark_pos]
+
+    album_data = sp.album(album_id)
+    tracks = sp.album_tracks(album_id, limit=50)
+    cover = album_data["images"][0]["url"]
+    album = album_data["name"]
     return [cover, tracks, album]
 
 
