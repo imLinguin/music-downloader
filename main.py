@@ -53,7 +53,11 @@ def main():
     args = parser.parse_args()
 
     classified = classify_query(args.query)
-    
+    # Check if Out folder exists
+    if not os.path.isdir("./Out"):
+        os.makedirs("./Out")
+        print("Creating Output directory in {0}".format(os.path.join(os.getcwd(),"Out")))
+
     # Execute if title is provided
     if classified == "custom":
         results = data_collect.get_spotify_title_data(args.query)
