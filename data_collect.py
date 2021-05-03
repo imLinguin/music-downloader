@@ -1,8 +1,13 @@
 import spotipy
+import os
+from dotenv import load_dotenv
 from spotipy.oauth2 import SpotifyClientCredentials
 
-sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="SPOTIFY_CLIENT_ID",
-                                                           client_secret="SPOTIFY_CLIENT_SECRET"))
+load_dotenv()
+
+
+sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=os.getenv("SPOTIFY_CLIENT_ID"),
+                                                           client_secret=os.getenv("SPOTIFY_SECRET")))
 
 
 def get_spotify_title_data(query):
