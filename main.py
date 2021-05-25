@@ -5,20 +5,22 @@ import os
 import sys
 import re
 
-illegal_chars = ["/", "\\", "|", "\'", "*", "?", "<", ">", ":"]
-chars_to_escape = ["$", "&", "#"]
+illegal_chars = ["/", "\\", "|", "*", "?", "<", ">", ":"]
+chars_to_escape = ["$", "&", "#", "'", " ", "(", ")"]
 
 # Ensures that there are no illegal characters in song name
 def make_save_name(name):
     output = name
     for char in illegal_chars:
         output = output.replace(char, "_")
+    output = escape_chars(output)
     return output
 
 # Escapes sh specific characters
 def escape_chars(name):
-    for char in chars_to_escape:
-        name = name.replace(char, "\{0}".format(char))
+    if sys.platform != "win32":
+        for char in chars_to_escape:
+            name = name.replace(char, "\{0}".format(char))
     return name
 
 
@@ -36,14 +38,14 @@ def classify_query(query):
 
 def attach_metadata(filename, artist, album, cover, name):
     sys.stdout.write("\rAdding metadata...")
-    os.system('ffmpeg -i "Tmp/{0}.mp3" -i {3} -map 0 -map 1:0 -y -loglevel panic -hide_banner -codec copy '
-              '-metadata "artist={1}" -metadata "album={2}" Out/"{4}.mp3"'.format(escape_chars(filename),
+    os.system('ffmpeg -i Tmp/{0}.mp3 -i {3} -map 0 -map 1:0 -y -loglevel error -hide_banner -codec copy '
+              '-metadata "artist={1}" -metadata "album={2}" Out/{4}.mp3'.format(escape_chars(filename),
                                                                                   artist,
                                                                                   album,
                                                                                   cover,
                                                                                   make_save_name(name)))
     print("✅")
-    os.remove("./Tmp/{0}.mp3".format(filename))
+    #os.remove("./Tmp/{0}.mp3".format(filename))
 
 
 def main():
@@ -69,7 +71,7 @@ def main():
         cover = data["album"]["images"][0]["url"]
 
         print("{0} - {1}".format(name, artists[0]["name"]))
-        filename = youtube.download(("{1} {0}".format(name, artists[0]["name"])))
+        [filename, videoid] = youtube.download(("{1} {0}".format(name, artists[0]["name"])))
         attach_metadata(filename, artists[0]["name"], album, cover, name)
 
     # Else do same thing but with album
@@ -83,7 +85,7 @@ def main():
             name = track['name']
             artists = track["artists"]
             print("\r{1} {0}".format(name, artists[0]["name"]))
-            filename = youtube.download(("{1} {0}".format(name, artists[0]["name"])))
+            [filename, videoid] = youtube.download(("{1} {0}".format(name, artists[0]["name"])))
 
             attach_metadata(filename, artists[0]["name"], album, cover, name)
 
@@ -99,7 +101,7 @@ def main():
             album = track["track"]["album"]["name"]
             cover = track["track"]["album"]["images"][0]["url"]
             print("{0} - {1}".format(name, artists[0]["name"]))
-            filename = youtube.download(("{1} {0}".format(name, artists[0]["name"])))
+            [filename, videoid] = youtube.download(("{1} {0}".format(name, artists[0]["name"])))
 
             attach_metadata(filename, artists[0]["name"], album, cover, name)
     print("Done")
