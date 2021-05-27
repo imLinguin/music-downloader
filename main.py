@@ -36,25 +36,29 @@ def classify_query(query):
         return "custom"
 
 
-def attach_metadata(filename, artist, album, cover, name):
+def attach_metadata(filename, artist, album, cover, name, params):
+    if not params:
+        params = ""
     sys.stdout.write("\rAdding metadata...")
-    os.system('ffmpeg -i Tmp/{0}.mp3 -i {3} -map 0 -map 1:0 -y -loglevel error -hide_banner -codec copy '
-              '-metadata "artist={1}" -metadata "album={2}" Out/{4}.mp3'.format(escape_chars(filename),
+    os.system('ffmpeg -i Tmp/{0} -i {3} -map 0 -map 1:0 -y -loglevel error -hide_banner '
+              '-metadata "artist={1}" -metadata "album={2}" {5} Out/{4}.mp3'.format(escape_chars(filename),
                                                                                   artist,
                                                                                   album,
                                                                                   cover,
-                                                                                  make_save_name(name)))
+                                                                                  make_save_name(name),
+                                                                                  params))
     print("✅")
-    #os.remove("./Tmp/{0}.mp3".format(filename))
+    os.remove("./Tmp/{0}".format(filename))
 
 
 def main():
     parser = argparse.ArgumentParser(description='Download desired song with metadata. Please put values in quotes')
     parser.add_argument("query", type=str, help="Title or url of the song, url of playlist, url of album")
-
+    parser.add_argument("--ffmpeg_args",type=str, help="Additional parameters to ffmpeg such as effects etc..")
     args = parser.parse_args()
 
     classified = classify_query(args.query)
+    ffmpeg_args = args.ffmpeg_args
     # Check if Out folder exists
     if not os.path.isdir("./Out"):
         os.makedirs("./Out")
@@ -72,7 +76,7 @@ def main():
 
         print("{0} - {1}".format(name, artists[0]["name"]))
         [filename, videoid] = youtube.download(("{1} {0}".format(name, artists[0]["name"])))
-        attach_metadata(filename, artists[0]["name"], album, cover, name)
+        attach_metadata(filename, artists[0]["name"], album, cover, name, ffmpeg_args)
 
     # Else do same thing but with album
     elif classified == "album":
@@ -87,7 +91,7 @@ def main():
             print("\r{1} {0}".format(name, artists[0]["name"]))
             [filename, videoid] = youtube.download(("{1} {0}".format(name, artists[0]["name"])))
 
-            attach_metadata(filename, artists[0]["name"], album, cover, name)
+            attach_metadata(filename, artists[0]["name"], album, cover, name, ffmpeg_args)
 
     elif classified == "playlist":        
         # Extract playlist ID from URL
@@ -103,7 +107,7 @@ def main():
             print("{0} - {1}".format(name, artists[0]["name"]))
             [filename, videoid] = youtube.download(("{1} {0}".format(name, artists[0]["name"])))
 
-            attach_metadata(filename, artists[0]["name"], album, cover, name)
+            attach_metadata(filename, artists[0]["name"], album, cover, name, ffmpeg_args)
     print("Done")
 
 if __name__ == '__main__':

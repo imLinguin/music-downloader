@@ -8,11 +8,6 @@ ytdl_opts = {
     "noprogress": True,
     "noplaylist": True,
     "quiet":True,
-    "postprocessors": [{
-        'key': 'FFmpegExtractAudio',
-        'preferredcodec': 'mp3',
-        'preferredquality': '192',
-    }]
 }
 
 ytdl = youtube_dl.YoutubeDL(ytdl_opts)
@@ -32,7 +27,7 @@ def progress(data):
                 seconds = seconds - 60 * minutes
                 eta = "{0}:{1}".format(minutes, seconds)
             else:
-                eta = "00:00"
+                eta = "0:0"
 
             sys.stdout.write("\r{0}% ETA {1}".format(procentage, eta))
 
@@ -45,6 +40,6 @@ def download(query):
     if len(downloaded.get("entries")) > 0:
         downloaded = downloaded['entries'][0]
     filename = ytdl.prepare_filename(downloaded)
-    dot = filename.rindex(".")
-    name = filename[4:dot]
+    #dot = filename.rindex(".")
+    name = filename[4:]
     return [name, downloaded.get("id")]
