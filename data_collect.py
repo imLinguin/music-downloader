@@ -23,7 +23,8 @@ def get_spotify_album_data(args):
     tracks = sp.album_tracks(album_id, limit=50)
     cover = album_data["images"][0]["url"]
     album = album_data["name"]
-    return [cover, tracks, album]
+    year = album_data["release_date"]
+    return [cover, tracks, album, year]
 
 
 def get_spotify_playlist_tracks(playlist_id):

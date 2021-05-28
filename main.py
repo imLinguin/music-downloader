@@ -21,6 +21,8 @@ def escape_chars(name):
     if sys.platform != "win32":
         for char in chars_to_escape:
             name = name.replace(char, "\{0}".format(char))
+    else:
+        name = '"{0}"'.format(name)
     return name
 
 
@@ -36,17 +38,20 @@ def classify_query(query):
         return "custom"
 
 
-def attach_metadata(filename, artist, album, cover, name, params):
+def attach_metadata(filename, artist, album, cover, name, year,params):
     if not params:
         params = ""
     sys.stdout.write("\rAdding metadata...")
     os.system('ffmpeg -i Tmp/{0} -i {3} -map 0 -map 1:0 -y -loglevel error -hide_banner '
-              '-metadata "artist={1}" -metadata "album={2}" {5} Out/{4}.mp3'.format(escape_chars(filename),
+              '-metadata "artist={1}" -metadata "album={2}" -metadata "title={6}" -metadata "date={7}" {5} Out/{4}.mp3'.format(escape_chars(filename),
                                                                                   artist,
                                                                                   album,
                                                                                   cover,
                                                                                   make_save_name(name),
-                                                                                  params))
+                                                                                  params,
+                                                                                  name,
+                                                                                  year
+                                                                                  ))
     print("✅")
     os.remove("./Tmp/{0}".format(filename))
 
@@ -73,25 +78,22 @@ def main():
         album = data["album"]["name"]
         artists = data["album"]["artists"]
         cover = data["album"]["images"][0]["url"]
-
+        year = data["album"]["release_date"][:4]
         print("{0} - {1}".format(name, artists[0]["name"]))
         [filename, videoid] = youtube.download(("{1} {0}".format(name, artists[0]["name"])))
-        attach_metadata(filename, artists[0]["name"], album, cover, name, ffmpeg_args)
+        attach_metadata(filename, artists[0]["name"], album, cover, name, year, ffmpeg_args)
 
     # Else do same thing but with album
     elif classified == "album":
         results = data_collect.get_spotify_album_data(args.query)
-        cover = results[0]
-        data = results[1]
-        album = results[2]
-
+        [cover, data, album, year] = results
         for track in data["items"]:
             name = track['name']
             artists = track["artists"]
             print("\r{1} {0}".format(name, artists[0]["name"]))
             [filename, videoid] = youtube.download(("{1} {0}".format(name, artists[0]["name"])))
-
-            attach_metadata(filename, artists[0]["name"], album, cover, name, ffmpeg_args)
+            
+            attach_metadata(filename, artists[0]["name"], album, cover, name, year, ffmpeg_args)
 
     elif classified == "playlist":        
         # Extract playlist ID from URL
@@ -104,10 +106,11 @@ def main():
             artists = track["track"]["artists"]
             album = track["track"]["album"]["name"]
             cover = track["track"]["album"]["images"][0]["url"]
+            year = track["track"]["album"]["release_date"][:4]
             print("{0} - {1}".format(name, artists[0]["name"]))
             [filename, videoid] = youtube.download(("{1} {0}".format(name, artists[0]["name"])))
 
-            attach_metadata(filename, artists[0]["name"], album, cover, name, ffmpeg_args)
+            attach_metadata(filename, artists[0]["name"], album, cover, name, year, ffmpeg_args)
     print("Done")
 
 if __name__ == '__main__':
